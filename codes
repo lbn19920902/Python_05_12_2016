@@ -1,0 +1,12 @@
+import pandas as pd
+# to customize the displayed area of the dataframe
+pd.set_option('data.col',1000)
+# like a table in r
+df['name of col'].value_counts()
+#a horizatal bar plot and stack
+df.plot(kind='barh',stacked=True,fontsize=14,figsize=[16,12],colormap='gist_ncar')
+plt.title(',,,.,..,',fontsize=20)
+plt.xlabel('bbbb',fontsize=22)
+plt.ylabel('vvv',fontsize=12)
+plt.legend(["kkk"],prop={'size':15})
+c=c.sort_values(ascending=False)
