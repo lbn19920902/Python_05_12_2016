@@ -1,1 +1,30 @@
 
+#train
+from sklearn.feature_selection import SelectKBest,f_regression
+from sklearn.ensemble import RandomForestRegressor
+import matplotlib.pyplot as plt
+from sklearn import metrics
+
+train=data[data.fold==0]
+pc=[]
+for i in range(len(train)):
+s=train.filename.irow(i)[:5]
+pc.append(int(s[2:s.find('_')]))
+train['pc']=pc
+
+#parameter iptimization 
+cv_fold=15
+result=[]
+rs=0
+for id in range(1):
+    for num_features in range(40,50,10):
+        for max_features in range(4,5):
+            for min_sample_split in range(2,3):
+            cv=np.random.randint(0,cv_folds,len(train))
+            train3['cv']=cv
+            for bird in range(num_species):
+                predicted_test_vector.append(np.zeros(len(test3))
+            
+            for c in range(cv_folds):
+                df_10=train3[train3.cv==c]
+                df_90=train3[train3.cv!=c]
