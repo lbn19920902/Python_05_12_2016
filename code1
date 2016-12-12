@@ -1,1 +1,58 @@
+import numpy as np
+import pandas as pd
+import scipy as sp
+import pickle
+from scipy import fft
+from time import localtime, strftime
+from matplotlib.pyplot as plt
+from skimage.morphology import disk, remove_small_objects
+from skimage.filter import rank
+from skimage.util import img_as_ubyte
+import wave
 
+#folder name setting
+folder='....path....'
+
+#read the essential data
+#labels, training-test split, file_names etc.
+recf=pd.read_csv('..',sep=',')
+....follow the few file reading
+num_species=19
+label=np.zeros(len(raw)*num_species)
+label=label.reshape([len(raw),num_species])
+for i in range(len(raw)):
+    line=raw.irow(i)
+    labels=line[0].split(',')
+    labels.pop(0)
+    for c in labels:
+        if (c!='?'):
+        label[i,c]=1
+
+label=pd.DataFrame(label)
+label['rec_id']=cv.rec_id
+label['fold']=cv.fold
+lable['filename']=rec2f.filename
+spec_avg=label[label.fold==0][range(num_species)].mean()
+spec_avg.sort()
+plt.plot(spec_avg,'go')
+
+def pic_to_ubyte(pic):
+    a=(pic-np.min(pic))/(np.max(pic-np.min(pic)))
+    a=img_as_ubyte(a)
+    return a
+
+n=160000
+k=512
+step=4
+wind=0.5*(1-np.cos(np.array(range(k))*2(np.pi/(k-1)))
+ffts=[]
+
+def wav_to_floats(filename):
+    s=wave.open(filename,'r')
+    strsig=s.readframes(s.getnframes())
+    y=np.fromstring(strsig,np.short)
+    s.close()
+    return y
+
+#print time
+print strftime("%a,%d,%b,%v,%H:%M:%S+0000",localtime())
