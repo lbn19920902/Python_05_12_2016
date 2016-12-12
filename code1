@@ -63,6 +63,18 @@ for file_idx in range(len(label)):
     for n in range(num_species):
         if (label.irow(file_idx)[n]>0):
             species_on_pic.append(n)
+                ffts.append(np.array(spectogram))
+
+#segments
+labeled_segments, num_seg=sp.ndimage.label(bfh_rm)
+plt.subplot(6,2,11)
+plt.imshow(labeled_segments)
+plt.axis('off')
+plt.title('+/////++')
+
+output=open(dp_folder+'...','wb')
+pickle.dump(...,output)
+output.close()
 
 s=wav_to_floats(....,...)
 spectogram=[]
