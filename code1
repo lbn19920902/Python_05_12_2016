@@ -56,3 +56,17 @@ def wav_to_floats(filename):
 
 #print time
 print strftime("%a,%d,%b,%v,%H:%M:%S+0000",localtime())
+for file_idx in range(len(label)):
+    test_flag=label.irow(file_idx)['fold']
+    fname=label.irow(file_idx)['filename']
+    species_on_pic=[]
+    for n in range(num_species):
+        if (label.irow(file_idx)[n]>0):
+            species_on_pic.append(n)
+
+s=wav_to_floats(....,...)
+spectogram=[]
+for j in range(int(Step*N/K)-Step):
+    vec=s[j*k/Step:(i+Step)*k/Step]*wind
+    spectogram.append(abs(fft(vec,k)[:k/2]))
+    
