@@ -1,0 +1,111 @@
+import sys
+import os
+import time
+import logging
+import ConfigParser
+import operator
+import numpy as np
+import pandas as pd
+import ml_metrics as metrics
+import sklearn.preprocessing import LabelEncoder
+
+def prepare_data(df,n_cell_x,n_cell_y):
+    """
+    feature engineering and compuation of the grid
+    """
+    #creating the grid
+    size_x=10./n_cell_x
+    size_y=10./n_cell_y
+    esp=0.00001
+    xp=np.where(df.x.values<eps,0,df.x.values-eps)
+    ys=np.where(df.y.values<eps,0,df.y.values-eps)
+    pos_x=(xs/size_x).astype(np.int)
+    pos_y=(ys/size_y).astype(np.int)
+    df['grid_cell_x']=pos_x
+    df['grid_cell_y']=pos_y
+    #feature engineering
+    initial_date=np.datetime64('2014-01-01T01:01',dtype='datetime64[m]')
+    d_times=pd.DatetimeIndex(initial_date+np.timedelta64(int(mn),'m')
+    for mn in df.time.values)
+    
+    df['hour']=d_times.hour+d_times.minute/60.
+    df['weekday']=d_times.weekday
+    df['day']=d_times.dayofyear
+    df['month']=d_times.month
+    df['year']=d_times.year
+
+    df=df.drop(['time'],axis=1)
+    return df
+    
+def train_hour_periodic(df_train,time_edge):
+    logging.info("add train data to show period in hour, time_edge=%f" % time_edge)
+    add_data=df_train[df_train.hour<time_edge].copy().reindex()
+    add_data.hour+=24
+    df_train=pd.concat([df_train,add_data])
+    
+    add_data=df_train[df_train.hour>24-time_edge].copy().reindex()
+    add_data.hour-=24
+    df_train=pd.concat([df_train,add_data])
+    return df_train
+
+def process_one_cell(df_train,df_test,valid_mode_on,
+                     gx_id,gy_id,x_border,y_border, th, model_list):
+    """
+    classification inside one grid cell.
+    """
+    df_cell_train=df_train.loc[(df_train.grid_cell_x==gx_id)&(df_train.grid_cell_y)==gy_id]
+    x_min=df_cell_train.x.min()
+    x_max=df_cell_train.x.max()
+    y_min=df_cell_train.y.min()
+    y_max=df_cell_train.y.max()
+    df_cell_train=df_train.loc[(df_train.x>x_min-x_border)&(df_train.x<=x_max+x_border)
+    &(df_train.y>=y_min-y_border)&(df_train.y<=y_max+y_border)]
+    
+place_counts=df_cell_train.place_id.value_counts()
+mask=(place_counts[df_cell_train.place_id.values]>=th).values
+df_cell_train=df_cell_train.loc[mask]
+
+df_cell_test=df_test.loc[(df_test.grid_cell_x==gx_id)&(df_test.grid_cell_y==gy_id)]
+row_ids=df_cell_test.row_id.values
+
+le=LabelEncoder()
+y_train=le.fit_transform(df_cell_train.place_id.values)
+l_train=df_cell_train.shape[0]
+l_test=df_cell_test.shape[0]
+n_class=len(le.classes_)
+logging.info("number of class: %d" %n_class)
+if valid_mode_on:
+    logging.info("validation mode")
+    logging.info("train size:%d, validation size:%d" %(l_train,l_test))
+    logging.info("%d labels in validation is not in train"
+                 %len(set(df_cell_test.place_id.values)-set(df_cell_train.place_id.values)))
+else:
+    logging.info("prediction mode")
+    logging.info("train size:%d, test size:%d" %(l_train,l_test))
+    
+df_cell_train_feats=df_cell_train_drop(['place_id','grid_cell_x','grid_cell_y','row_id'],axis=1)
+feats=df_cell_train_feats.columns.values
+df_cell_test_feats=df_cell_test[feats]
+
+y_test_pred=np.zeros((df_cell_test_feats.shape[0],n_class))
+for clf in mode_list:
+    y_test_pred_model=clf(df_cell_train_feats,y_train,df_cell_test_feats)
+    y_test_pred+=y_test_pred_model
+    
+if valid_mode_on:
+    pred_labels=le.inverse_transformation(np.argsort(y_test_pred,axis=1)[:,::-1][:,:10])
+    valid_score=metrics.mapk(df_cell_test.place_id.values[:,None],pred_labels,3)
+    logging.info("valid score=%6.6f"%valid_score)
+else:
+    valid_score=None
+
+top10_label=le.inverse_transform(np.argsort(y_test_pred,axis=1)[:,::-1][:,:10])
+top10_proba_raw=np.sort(y_test_pred,axis=1)[:,::-1][:,:10]
+top10_proba=top10_proba_raw/np.sum(top10_proba_raw,axis=1)[:,None]
+probas=[]
+for i, rid in enumerate(row_ids):
+    if i==0:
+        probas=np.array([[rid]*10,top10_label[i],top10_proba[i]]).T
+    else:
+        probas=np.vstack([probas,np.array([[rid]*10,top10_label[i],top10_proba[i]]).T])
+        
